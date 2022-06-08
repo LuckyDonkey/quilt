@@ -1,7 +1,7 @@
 import React from 'react';
 import gql from 'graphql-tag';
 import {DocumentNode} from 'graphql-typed';
-import {ApolloClient, NetworkStatus} from 'apollo-client';
+import {ApolloClient, NetworkStatus} from '@apollo/client';
 import {ApolloLink} from 'apollo-link';
 import {InMemoryCache} from 'apollo-cache-inmemory';
 import {createGraphQLFactory} from '@shopify/graphql-testing';
