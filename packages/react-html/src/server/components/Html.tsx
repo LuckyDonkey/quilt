@@ -1,15 +1,15 @@
 import React from 'react';
-import {renderToString} from 'react-dom/server';
-import {HydrationContext, HydrationManager} from '@shopify/react-hydrate';
+import { renderToString } from 'react-dom/server';
+import { HydrationContext, HydrationManager } from '@shopify/react-hydrate';
 
-import {HtmlManager} from '../../manager';
-import {HtmlContext} from '../../context';
-import {MANAGED_ATTRIBUTE, removeDuplicate} from '../../utilities';
+import { HtmlManager } from '../../manager';
+import { HtmlContext } from '../../context';
+import { MANAGED_ATTRIBUTE, removeDuplicate } from '../../utilities';
 
-import {Script} from './Script';
+import { Script } from './Script';
 import Serialize from './Serialize';
-import {Stylesheet} from './Stylesheet';
-import {InlineStyle} from './InlineStyle';
+import { Stylesheet } from './Stylesheet';
+import { InlineStyle } from './InlineStyle';
 
 export interface Asset {
   path: string;
@@ -18,6 +18,8 @@ export interface Asset {
 
 export interface ScriptAsset extends Asset {
   type?: 'module' | 'nomodule' | 'script';
+  disableCrossOrigin?: boolean;
+  async?: boolean | undefined;
 }
 
 export interface InlineStyle {
@@ -54,17 +56,17 @@ export default function Html({
   const markup =
     typeof children === 'string'
       ? children
-      : render(children, {htmlManager: manager, hydrationManager});
+      : render(children, { htmlManager: manager, hydrationManager });
 
   const extracted = manager && manager.extract();
 
   const serializationMarkup = extracted
-    ? extracted.serializations.map(({id, data}) => (
-        <Serialize key={id} id={id} data={data} />
-      ))
+    ? extracted.serializations.map(({ id, data }) => (
+      <Serialize key={id} id={id} data={data} />
+    ))
     : null;
 
-  const managedProps = {[MANAGED_ATTRIBUTE]: true};
+  const managedProps = { [MANAGED_ATTRIBUTE]: true };
 
   const titleMarkup =
     extracted && extracted.title ? (
@@ -73,20 +75,20 @@ export default function Html({
 
   const metaMarkup = extracted
     ? removeDuplicate(extracted.metas).map((metaProps, index) => (
-        // This is never re-rendered, since it is the initial HTML document,
-        // so index keys are acceptable.
-        // eslint-disable-next-line react/no-array-index-key
-        <meta key={index} {...managedProps} {...metaProps} />
-      ))
+      // This is never re-rendered, since it is the initial HTML document,
+      // so index keys are acceptable.
+      // eslint-disable-next-line react/no-array-index-key
+      <meta key={index} {...managedProps} {...metaProps} />
+    ))
     : null;
 
   const linkMarkup = extracted
     ? extracted.links.map((linkProps, index) => (
-        // This is never re-rendered, since it is the initial HTML document,
-        // so index keys are acceptable.
-        // eslint-disable-next-line react/no-array-index-key
-        <link key={index} {...managedProps} {...linkProps} />
-      ))
+      // This is never re-rendered, since it is the initial HTML document,
+      // so index keys are acceptable.
+      // eslint-disable-next-line react/no-array-index-key
+      <link key={index} {...managedProps} {...linkProps} />
+    ))
     : null;
 
   const stylesheetMarkup = styles.map((style) => {
@@ -125,7 +127,8 @@ export default function Html({
         src={script.path}
         integrity={script.integrity}
         type={script.type}
-        crossOrigin="anonymous"
+        crossOrigin={script.disableCrossOrigin ? undefined : 'anonymous'}
+        async={script.async}
         defer
       />
     );
@@ -141,7 +144,7 @@ export default function Html({
   // eslint-disable-next-line no-process-env
   if (process.env.NODE_ENV === 'development') {
     if (bodyAttributes.style == null) {
-      bodyAttributes.style = {visibility: 'hidden'};
+      bodyAttributes.style = { visibility: 'hidden' };
     } else {
       bodyAttributes.style.visibility = 'hidden';
     }
@@ -166,7 +169,7 @@ export default function Html({
       </head>
 
       <body {...bodyAttributes}>
-        <div id="app" dangerouslySetInnerHTML={{__html: markup}} />
+        <div id="app" dangerouslySetInnerHTML={{ __html: markup }} />
 
         {bodyMarkup}
         {serializationMarkup}
@@ -180,7 +183,7 @@ function render(
   {
     htmlManager,
     hydrationManager,
-  }: {htmlManager?: HtmlManager; hydrationManager?: HydrationManager},
+  }: { htmlManager?: HtmlManager; hydrationManager?: HydrationManager },
 ) {
   const hydrationWrapped = hydrationManager ? (
     <HydrationContext.Provider value={hydrationManager}>

@@ -1,12 +1,12 @@
 import React from 'react';
 import withEnv from '@shopify/with-env';
-import {mount} from '@shopify/react-testing';
+import { mount } from '@shopify/react-testing';
 
-import {Script} from '../Script';
-import {Stylesheet} from '../Stylesheet';
-import {InlineStyle} from '../InlineStyle';
-import {HtmlManager} from '../../../manager';
-import {MANAGED_ATTRIBUTE} from '../../../utilities';
+import { Script } from '../Script';
+import { Stylesheet } from '../Stylesheet';
+import { InlineStyle } from '../InlineStyle';
+import { HtmlManager } from '../../../manager';
+import { MANAGED_ATTRIBUTE } from '../../../utilities';
 import Html from '../Html';
 import Serialize from '../Serialize';
 
@@ -19,12 +19,12 @@ jest.mock(
 );
 
 describe('<Html />', () => {
-  const mockProps = {children: <div />};
+  const mockProps = { children: <div /> };
 
   it('hides the body contents in development', () => {
     const html = withEnv('development', () => mount(<Html {...mockProps} />));
     expect(html).toContainReactComponent('body', {
-      style: {visibility: 'hidden'},
+      style: { visibility: 'hidden' },
     });
   });
 
@@ -36,7 +36,7 @@ describe('<Html />', () => {
 
   it('contains basic meta tags', () => {
     const html = mount(<Html {...mockProps} />);
-    expect(html).toContainReactComponent('meta', {charSet: 'utf-8'});
+    expect(html).toContainReactComponent('meta', { charSet: 'utf-8' });
     expect(html).toContainReactComponent('meta', {
       httpEquiv: 'X-UA-Compatible',
       content: 'IE=edge',
@@ -50,13 +50,13 @@ describe('<Html />', () => {
   describe('locale', () => {
     it('defaults to setting the lang to "en" on the html', () => {
       const html = mount(<Html {...mockProps} />);
-      expect(html).toContainReactComponent('html', {lang: 'en'});
+      expect(html).toContainReactComponent('html', { lang: 'en' });
     });
 
     it('sets the HTML lang to an explicitly passed locale', () => {
       const locale = 'fr';
       const html = mount(<Html {...mockProps} locale={locale} />);
-      expect(html).toContainReactComponent('html', {lang: locale});
+      expect(html).toContainReactComponent('html', { lang: locale });
     });
   });
 
@@ -65,14 +65,14 @@ describe('<Html />', () => {
       const html = mount(<Html {...mockProps}>hello world</Html>);
       expect(html).toContainReactComponent('div', {
         id: 'app',
-        dangerouslySetInnerHTML: {__html: 'hello world'},
+        dangerouslySetInnerHTML: { __html: 'hello world' },
       });
     });
   });
 
   describe('deferedScripts', () => {
     it('generates a script tag in the head with the `defer` attribute', () => {
-      const scripts = [{path: 'foo.js'}, {path: 'bar.js'}];
+      const scripts = [{ path: 'foo.js' }, { path: 'bar.js' }];
       const html = mount(<Html {...mockProps} scripts={scripts} />);
       const head = html.find('head')!;
 
@@ -84,8 +84,33 @@ describe('<Html />', () => {
       }
     });
 
+    it('generates a script tag in the head with crossOrigin anonymous by default', () => {
+      const scripts = [{ path: 'foo.js' }, { path: 'bar.js' }];
+      const html = mount(<Html {...mockProps} scripts={scripts} />);
+      const head = html.find('head')!;
+
+      for (const script of scripts) {
+        expect(head).toContainReactComponent(Script, {
+          crossOrigin: 'anonymous'
+        });
+      }
+    });
+
+    it('generates a script tag in the head without crossOrigin when disabled', () => {
+      const scripts = [{ path: 'foo.js', disableCrossOrigin: true }, { path: 'bar.js', disableCrossOrigin: true }];
+      console.log('s', scripts)
+      const html = mount(<Html {...mockProps} scripts={scripts} />);
+      const head = html.find('head')!;
+
+      for (const script of scripts) {
+        expect(head).toContainReactComponent(Script, {
+          crossOrigin: undefined
+        });
+      }
+    });
+
     it('includes `type` attributes', () => {
-      const script = {path: 'foo.js', type: 'nomodule' as const};
+      const script = { path: 'foo.js', type: 'nomodule' as const };
       const html = mount(<Html {...mockProps} scripts={[script]} />);
       const head = html.find('head')!;
 
@@ -93,11 +118,31 @@ describe('<Html />', () => {
         type: 'nomodule',
       });
     });
+
+    it('does not include async attribute by default', () => {
+      const scripts = [{ path: 'foo.js' }, { path: 'bar.js' }];
+      const html = mount(<Html {...mockProps} scripts={scripts} />);
+      const head = html.find('head')!;
+
+      expect(head).not.toContainReactComponent(Script, {
+        async: true
+      });
+    });
+
+    it('includes async attribute when enabled', () => {
+      const scripts = [{ path: 'foo.js', async: true }, { path: 'bar.js', async: true }];
+      const html = mount(<Html {...mockProps} scripts={scripts} />);
+      const head = html.find('head')!;
+
+      expect(head).toContainReactComponent(Script, {
+        async: true
+      });
+    });
   });
 
   describe('blockingScripts', () => {
     it('generates a script tag in the head without the `defer` attribute', () => {
-      const scripts = [{path: 'foo.js'}, {path: 'bar.js'}];
+      const scripts = [{ path: 'foo.js' }, { path: 'bar.js' }];
       const html = mount(<Html {...mockProps} blockingScripts={scripts} />);
       const head = html.find('head')!;
 
@@ -109,7 +154,7 @@ describe('<Html />', () => {
     });
 
     it('includes `type` attributes', () => {
-      const script = {path: 'foo.js', type: 'module' as const};
+      const script = { path: 'foo.js', type: 'module' as const };
       const html = mount(<Html {...mockProps} blockingScripts={[script]} />);
       const head = html.find('head')!;
 
@@ -121,7 +166,7 @@ describe('<Html />', () => {
 
   describe('styles', () => {
     it('generates a link tag in the head', () => {
-      const styles = [{path: 'foo.js'}, {path: 'bar.js'}];
+      const styles = [{ path: 'foo.js' }, { path: 'bar.js' }];
       const html = mount(<Html {...mockProps} styles={styles} />);
       const head = html.find('head')!;
 
@@ -136,8 +181,8 @@ describe('<Html />', () => {
   describe('inlineStyles', () => {
     it('generates a style tag in the head', () => {
       const inlineStyles = [
-        {content: '.foo{color:blue;}'},
-        {content: '.bar{color:red;}'},
+        { content: '.foo{color:blue;}' },
+        { content: '.bar{color:red;}' },
       ];
       const html = mount(<Html {...mockProps} inlineStyles={inlineStyles} />);
       const head = html.find('head')!;
@@ -152,7 +197,7 @@ describe('<Html />', () => {
 
   describe('preloadAssets', () => {
     it('generates a link[rel=prefetch] tag', () => {
-      const asset = {path: 'foo.js'};
+      const asset = { path: 'foo.js' };
       const html = mount(<Html {...mockProps} preloadAssets={[asset]} />);
       expect(html.find('head')).toContainReactComponent('link', {
         rel: 'prefetch',
@@ -168,7 +213,7 @@ describe('<Html />', () => {
         <Html
           {...mockProps}
           headMarkup={headMarkup}
-          blockingScripts={[{path: 'foo.js'}]}
+          blockingScripts={[{ path: 'foo.js' }]}
         />,
       );
       const headContents = html.find('head')!.descendants;
@@ -190,8 +235,8 @@ describe('<Html />', () => {
         <Html
           {...mockProps}
           headMarkup={headMarkup}
-          blockingScripts={[{path: 'foo.js'}]}
-          scripts={[{path: 'bar.js'}]}
+          blockingScripts={[{ path: 'foo.js' }]}
+          scripts={[{ path: 'bar.js' }]}
         />,
       );
       const headContents = html.find('head')!.descendants;
@@ -215,7 +260,7 @@ describe('<Html />', () => {
         <Html
           {...mockProps}
           bodyMarkup={bodyMarkup}
-          scripts={[{path: 'foo.js'}]}
+          scripts={[{ path: 'foo.js' }]}
         />,
       );
 
@@ -228,7 +273,7 @@ describe('<Html />', () => {
   describe('manager', () => {
     it('renders serializations', () => {
       const id = 'MySerialization';
-      const data = {foo: 'bar'};
+      const data = { foo: 'bar' };
       const manager = new HtmlManager();
       manager.setSerialization(id, data);
 
@@ -251,8 +296,8 @@ describe('<Html />', () => {
     });
 
     it('renders meta tags with the managed attribute', () => {
-      const metaOne = {content: 'foo'};
-      const metaTwo = {content: 'bar'};
+      const metaOne = { content: 'foo' };
+      const metaTwo = { content: 'bar' };
 
       const manager = new HtmlManager();
       manager.addMeta(metaOne);
@@ -272,15 +317,15 @@ describe('<Html />', () => {
       const globalDescription = 'global description';
       const pageDescription = 'page description';
 
-      const latestDescription = {name: 'description', content: pageDescription};
+      const latestDescription = { name: 'description', content: pageDescription };
       const latestOgDescription = {
         property: 'og:description',
         content: pageDescription,
       };
 
       const manager = new HtmlManager();
-      manager.addMeta({name: 'description', content: globalDescription});
-      manager.addMeta({property: 'og:description', content: globalDescription});
+      manager.addMeta({ name: 'description', content: globalDescription });
+      manager.addMeta({ property: 'og:description', content: globalDescription });
       manager.addMeta(latestDescription);
       manager.addMeta(latestOgDescription);
 
@@ -295,8 +340,8 @@ describe('<Html />', () => {
     });
 
     it('renders link tags with the managed attribute', () => {
-      const linkOne = {href: 'foo'};
-      const linkTwo = {href: 'bar'};
+      const linkOne = { href: 'foo' };
+      const linkTwo = { href: 'bar' };
 
       const manager = new HtmlManager();
       manager.addLink(linkOne);
@@ -313,7 +358,7 @@ describe('<Html />', () => {
     });
 
     it('renders html attributes', () => {
-      const htmlProps = {lang: 'fr'};
+      const htmlProps = { lang: 'fr' };
       const manager = new HtmlManager();
       manager.addHtmlAttributes(htmlProps);
 
@@ -323,7 +368,7 @@ describe('<Html />', () => {
     });
 
     it('renders body attributes', () => {
-      const bodyProps = {className: 'beautiful'};
+      const bodyProps = { className: 'beautiful' };
       const manager = new HtmlManager();
       manager.addBodyAttributes(bodyProps);
 
